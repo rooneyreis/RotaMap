@@ -2,7 +2,7 @@ package com.estruturas;
 
 import com.auxiliar.ListaDuplamenteLigada;
 import com.auxiliar.No;
-import com.modelo.Local;
+import com.modelo.Dispositivo;
 
 public class TabelaHash {
     private static final int CAPACIDADE = 53; // primo
@@ -28,31 +28,31 @@ public class TabelaHash {
         return codigo;
     }
 
-    private Local BuscarNo(ListaDuplamenteLigada lista, String nome) {
+    private Dispositivo BuscarNo(ListaDuplamenteLigada lista, String nome) {
         No atual = lista.getPrimeiro();
         while (atual != null) {
-            Local local = (Local) atual.getElemento();
-            if (local.getNome().equalsIgnoreCase(nome)) {
-                return local;
+            Dispositivo dispositivo = (Dispositivo) atual.getElemento();
+            if (dispositivo.getNome().equalsIgnoreCase(nome)) {
+                return dispositivo;
             }
             atual = atual.getProximo();
         }
         return null;
     }
 
-    public void adiciona(Local local) {
-        int indice = codigoHash(local.getNome());
+    public void adiciona(Dispositivo dispositivo) {
+        int indice = codigoHash(dispositivo.getNome());
         ListaDuplamenteLigada lista = this.tabela[indice];
 
-        if (BuscarNo(lista, local.getNome()) != null) {
+        if (BuscarNo(lista, dispositivo.getNome()) != null) {
             return; // ja existe um local com este nome; nao duplica
         }
 
-        lista.adicionaFim(local);
+        lista.adicionaFim(dispositivo);
         this.tamanho++;
     }
 
-    public Local consulta(String nome) {
+    public Dispositivo consulta(String nome) {
         int indice = codigoHash(nome);
         return BuscarNo(this.tabela[indice], nome);
     }
@@ -64,8 +64,8 @@ public class TabelaHash {
         No atual = lista.getPrimeiro();
         int posicao = 0;
         while (atual != null) {
-            Local local = (Local) atual.getElemento();
-            if (local.getNome().equalsIgnoreCase(nome)) {
+            Dispositivo dispositivo = (Dispositivo) atual.getElemento();
+            if (dispositivo.getNome().equalsIgnoreCase(nome)) {
                 lista.removePosicao(posicao);
                 this.tamanho--;
                 return;

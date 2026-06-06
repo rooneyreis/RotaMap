@@ -4,7 +4,7 @@ import com.auxiliar.Fila;
 import com.auxiliar.ListaDuplamenteLigada;
 import com.auxiliar.No;
 import com.auxiliar.Pilha;
-import com.modelo.Local;
+import com.modelo.Dispositivo;
 
 public class Grafo {
     private ListaDuplamenteLigada vertices; // lista de Vertice
@@ -13,12 +13,12 @@ public class Grafo {
         this.vertices = new ListaDuplamenteLigada();
     }
 
-    // Encontra o Vertice que embrulha um dado Local, ou null.
-    private Vertice procuraVertice(Local local) {
+    // Encontra o Vertice que embrulha um dado Dispositivo, ou null.
+    private Vertice procuraVertice(Dispositivo dispositivo) {
         No atual = this.vertices.getPrimeiro();
         while (atual != null) {
             Vertice v = (Vertice) atual.getElemento();
-            if (v.getLocal().equals(local)) {
+            if (v.getDispositivo().equals(dispositivo)) {
                 return v;
             }
             atual = atual.getProximo();
@@ -26,20 +26,20 @@ public class Grafo {
         return null;
     }
 
-    public void adicionaVertice(Local local) {
-        if (procuraVertice(local) != null) {
+    public void adicionaVertice(Dispositivo dispositivo) {
+        if (procuraVertice(dispositivo) != null) {
             return; // ja existe este vertice
         }
-        this.vertices.adicionaFim(new Vertice(local));
+        this.vertices.adicionaFim(new Vertice(dispositivo));
     }
 
-    public void adicionaAresta(Local origem, Local destino, double peso) {
+    public void adicionaAresta(Dispositivo origem, Dispositivo destino, double peso) {
         Vertice vOrigem = procuraVertice(origem);
         Vertice vDestino = procuraVertice(destino);
 
         if (vOrigem == null || vDestino == null) {
             throw new IllegalArgumentException(
-                    "Ambos os locais tem de existir no grafo antes de os ligar.");
+                    "Ambos os dispositivos tem de existir no grafo antes de os ligar.");
         }
 
         ligar(vOrigem, vDestino, peso);   // origem -> destino
@@ -80,9 +80,9 @@ public class Grafo {
     }
 
     //=======BFS======
-    public ListaDuplamenteLigada caminhoMenosTrocos(Local origemLocal, Local destinoLocal) {
-        Vertice origem = procuraVertice(origemLocal);
-        Vertice destino = procuraVertice(destinoLocal);
+    public ListaDuplamenteLigada caminhoMenosTrocos(Dispositivo origemDispositivo, Dispositivo destinoDispositivo) {
+        Vertice origem = procuraVertice(origemDispositivo);
+        Vertice destino = procuraVertice(destinoDispositivo);
         if (origem == null || destino == null) {
             return new ListaDuplamenteLigada(); // origem ou destino nao existem
         }
@@ -124,28 +124,27 @@ public class Grafo {
         ListaDuplamenteLigada caminho = new ListaDuplamenteLigada();
         Vertice atual = destino;
         while (atual != null) {
-            caminho.adicionaInicio(atual.getLocal());
+            caminho.adicionaInicio(atual.getDispositivo());
             atual = atual.getAnterior();
         }
         return caminho;
     }
 
-    // DFS iterativo (Pilha): conta vertices alcancaveis a partir de 'inicio'.
-    private int contaAlcancaveis(Vertice inicio) {
+    //=======DFS======
+    // DFS iterativo (Pilha): devolve os dispositivos alcancaveis a partir de 'inicio'.
+    private ListaDuplamenteLigada dfs(Vertice inicio) {
         limparMarcas();
-
-        int contados = 0;
+        ListaDuplamenteLigada resultado = new ListaDuplamenteLigada();
         Pilha pilha = new Pilha();
         pilha.push(inicio);
 
         while (!pilha.isEmpty()) {
             Vertice atual = (Vertice) pilha.peekAndPop();
-
             if (atual.isVisitado()) {
                 continue; // ja processado; ignora repetidos
             }
             atual.setVisitado(true);
-            contados++;
+            resultado.adicionaFim(atual.getDispositivo());
 
             No no = atual.getAdjacentes().getPrimeiro();
             while (no != null) {
@@ -157,7 +156,21 @@ public class Grafo {
                 no = no.getProximo();
             }
         }
-        return contados;
+        return resultado;
+    }
+
+    // Conta vertices alcancaveis a partir de 'inicio' (usa o mesmo DFS).
+    public int contaAlcancaveis(Vertice inicio) {
+        return dfs(inicio).tamanho();
+    }
+
+    // Interface: dispositivos alcancaveis a partir de um dispositivo (DFS).
+    public ListaDuplamenteLigada alcancaveisDe(Dispositivo origem) {
+        Vertice inicio = procuraVertice(origem);
+        if (inicio == null) {
+            return new ListaDuplamenteLigada();
+        }
+        return dfs(inicio);
     }
 
     // Grafo conexo: todos os vertices alcancaveis a partir de um qualquer.
@@ -168,5 +181,67 @@ public class Grafo {
         Vertice inicio = (Vertice) this.vertices.pega(0);
         int alcancaveis = contaAlcancaveis(inicio);
         return alcancaveis == this.vertices.tamanho();
+    }
+
+    // Procura linear: vertice nao-visitado com menor distancia (ou null se nao houver).
+    private Vertice verticeMaisProximoNaoVisitado() {
+        Vertice melhor = null;
+        No atual = this.vertices.getPrimeiro();
+        while (atual != null) {
+            Vertice v = (Vertice) atual.getElemento();
+            if (!v.isVisitado() && v.getDistancia() < Double.POSITIVE_INFINITY) {
+                if (melhor == null || v.getDistancia() < melhor.getDistancia()) {
+                    melhor = v;
+                }
+            }
+            atual = atual.getProximo();
+        }
+        return melhor;
+    }
+
+    //===========Dijkstra===========
+    public Caminho caminhoMaisCurto(Dispositivo origemDispositivo, Dispositivo destinoDispositivo) {
+        Vertice origem = procuraVertice(origemDispositivo);
+        Vertice destino = procuraVertice(destinoDispositivo);
+        if (origem == null || destino == null) {
+            return new Caminho(new ListaDuplamenteLigada(), Double.POSITIVE_INFINITY);
+        }
+
+        limparMarcas();
+        origem.setDistancia(0);
+
+        while (true) {
+            Vertice atual = verticeMaisProximoNaoVisitado();
+            if (atual == null) {
+                break; // nao ha mais vertices alcancaveis
+            }
+            atual.setVisitado(true);
+
+            if (atual == destino) {
+                break; // ja fixamos a menor distancia ao destino
+            }
+
+            // relaxar os vizinhos
+            No no = atual.getAdjacentes().getPrimeiro();
+            while (no != null) {
+                Aresta a = (Aresta) no.getElemento();
+                Vertice vizinho = a.getDestino();
+                double novaDistancia = atual.getDistancia() + a.getPeso();
+                if (novaDistancia < vizinho.getDistancia()) {
+                    vizinho.setDistancia(novaDistancia);
+                    vizinho.setAnterior(atual);
+                }
+                no = no.getProximo();
+            }
+        }
+
+        if (destino.getDistancia() == Double.POSITIVE_INFINITY) {
+            return new Caminho(new ListaDuplamenteLigada(), Double.POSITIVE_INFINITY); // sem rota
+        }
+        return new Caminho(reconstroiCaminho(destino), destino.getDistancia());
+    }
+
+    public ListaDuplamenteLigada getVertices() {
+        return this.vertices;
     }
 }

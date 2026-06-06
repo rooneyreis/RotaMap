@@ -19,6 +19,6 @@ public class Aresta {
 
     @Override
     public String toString() {
-        return "-> " + this.destino.getLocal().getNome() + " (" + this.peso + " km)";
+        return "-> " + this.destino.getDispositivo().getNome() + " (" + this.peso + " km)";
     }
 }

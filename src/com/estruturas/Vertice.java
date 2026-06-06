@@ -1,10 +1,10 @@
 package com.estruturas;
 
 import com.auxiliar.ListaDuplamenteLigada;
-import com.modelo.Local;
+import com.modelo.Dispositivo;
 
 public class Vertice {
-    private final Local local;
+    private final Dispositivo dispositivo;
     private final ListaDuplamenteLigada adjacentes; // lista de Aresta
 
     // Marcas usadas pelos algoritmos (reiniciadas antes de cada execucao).
@@ -12,16 +12,16 @@ public class Vertice {
     private double distancia;
     private Vertice anterior;
 
-    public Vertice(Local local) {
-        this.local = local;
+    public Vertice(Dispositivo dispositivo) {
+        this.dispositivo = dispositivo;
         this.adjacentes = new ListaDuplamenteLigada();
         this.visitado = false;
         this.distancia = Double.POSITIVE_INFINITY;
         this.anterior = null;
     }
 
-    public Local getLocal() {
-        return this.local;
+    public Dispositivo getDispositivo() {
+        return this.dispositivo;
     }
 
     public ListaDuplamenteLigada getAdjacentes() {
